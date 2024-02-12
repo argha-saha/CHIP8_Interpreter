@@ -5,7 +5,6 @@
 #include <SDL2/SDL.h>
 
 #include "../include/chip8.h"
-#include "../include/processor.h"
 
 byte memory[RAM_SIZE];
 halfword stack[STACK_SIZE];

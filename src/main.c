@@ -5,11 +5,11 @@
 #include <SDL2/SDL.h>
 
 #include "../include/chip8.h"
-#include "../include/processor.h"
+#include "../include/display.h"
 
 int main(int argc, char **argv) {
     if (argc < 2) {
-        puts("USAGE: ./chip8 <rom_file>");
+        fprintf(stderr, "USAGE: %s <rom_file>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
 
