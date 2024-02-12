@@ -4,7 +4,8 @@ BUILD_DIR := build
 TARGET := chip8
 SDL2 := `sdl2-config --cflags --libs`
 
-SRCS := $(wildcard $(SRC_DIR)/*.c)
+SRCS := $(wildcard $(SRC_DIR)/*.c) \
+		$(SRC_DIR)/chip8.c
 OBJS := $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRCS))
 
 all: $(BUILD_DIR) $(TARGET)
