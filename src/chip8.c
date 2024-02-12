@@ -6,7 +6,7 @@
 
 #include "../include/chip8.h"
 
-bool intialize_sdl(sdl_t *sdl) {
+bool initialize_sdl(sdl_t *sdl) {
     // Initialize SDL Subsystems
     if (SDL_Init(SDL_INIT_TIMER | SDL_INIT_VIDEO) != 0) {
         SDL_Log("Unable to initialize SDL: %s", SDL_GetError());
@@ -42,6 +42,7 @@ bool intialize_sdl(sdl_t *sdl) {
 }
 
 void deactivate_sdl(sdl_t *sdl) {
+    SDL_DestroyTexture(sdl -> texture);
     SDL_DestroyRenderer(sdl -> renderer);
     SDL_DestroyWindow(sdl -> window);
     SDL_Quit();

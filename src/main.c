@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    disable_sdl(&sdl);
+    deactivate_sdl(&sdl);
 
     exit(EXIT_SUCCESS);
 }

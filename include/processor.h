@@ -37,12 +37,12 @@ typedef struct {
     halfword opcode;
 } chip8_vm;
 
-bool draw;
+extern byte memory[RAM_SIZE];           // 4 KB
+extern halfword stack[STACK_SIZE];
+extern byte graphics[RESOLUTION];
+extern byte scankey[16];
 
-byte memory[RAM_SIZE];                  // 4 KB
-halfword stack[STACK_SIZE];
-byte graphics[RESOLUTION];
-byte scankey[16];
+extern bool draw;
 
 bool initialize_machine(chip8_vm vm);
 

@@ -4,9 +4,10 @@
 typedef struct {
     SDL_Window *window;
     SDL_Renderer *renderer;
+    SDL_Texture *texture;
 } sdl_t;
 
-bool intialize_sdl(sdl_t *sdl);
+bool initialize_sdl(sdl_t *sdl);
 void deactivate_sdl(sdl_t *sdl);
 
 #endif
