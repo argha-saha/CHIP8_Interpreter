@@ -7,5 +7,6 @@ typedef struct {
 } sdl_t;
 
 bool intialize_sdl(sdl_t *sdl);
+void deactivate_sdl(sdl_t *sdl);
 
 #endif
