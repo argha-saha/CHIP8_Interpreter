@@ -8,8 +8,10 @@
 #include "../include/processor.h"
 
 int main(int argc, char **argv) {
-    (void) argc;
-    (void) argv;
+    if (argc < 2) {
+        puts("USAGE: ./chip8 <rom_file>");
+        exit(EXIT_FAILURE);
+    }
 
     sdl_t sdl = {0};
     if (initialize_sdl(&sdl) == false) {
@@ -17,7 +19,11 @@ int main(int argc, char **argv) {
     }
 
     chip8_vm vm = {0};
-    if (initialize_machine(vm) == false) {
+    if (initialize_machine(&vm) == false) {
+        exit(EXIT_FAILURE);
+    }
+
+    if (load_chip8_rom(&sdl, argv[1]) == false) {
         exit(EXIT_FAILURE);
     }
 

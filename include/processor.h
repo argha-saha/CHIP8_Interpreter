@@ -15,8 +15,6 @@ typedef unsigned char byte;             // 8 bits
 typedef unsigned short int halfword;    // 16 bits
 
 typedef struct {
-    // Memory
-
     // Registers
     byte V_register[0x10];              // V[0] to V[F]
     halfword I_register;
@@ -44,6 +42,7 @@ extern byte scankey[16];
 
 extern bool draw;
 
-bool initialize_machine(chip8_vm vm);
+bool initialize_machine(chip8_vm *vm);
+bool load_chip8_rom(sdl_t *sdl, char *rom_file);
 
 #endif
