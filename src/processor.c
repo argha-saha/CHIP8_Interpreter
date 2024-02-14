@@ -3,12 +3,13 @@
 #include <stdbool.h>
 
 #include <SDL2/SDL.h>
+#include <time.h>
 
 #include "../include/chip8.h"
 
 byte memory[RAM_SIZE];
 halfword stack[STACK_SIZE];
-byte graphics[RESOLUTION];
+word graphics[RESOLUTION];
 byte scankey[16];
 
 bool draw;
@@ -20,7 +21,7 @@ bool initialize_machine(chip8_vm *vm) {
     // Reset memory
     memset(memory, 0, MAX_MEMORY * sizeof(byte));
     memset(stack, 0, STACK_SIZE * sizeof(halfword));
-    memset(graphics, 0, RESOLUTION * sizeof(byte));
+    memset(graphics, 0, RESOLUTION * sizeof(word));
     memset(scankey, 0, 16);
     memset(vm -> V_register, 0, 16);
 
@@ -105,89 +106,150 @@ bool load_chip8_rom(sdl_t *sdl, char *rom_file) {
     return true;
 }
 
-void cpu_cycle(sdl_t *sdl, chip8_vm *vm) {
-    (void) *sdl;
+void cpu_cycle(chip8_vm *vm) {
+	vm -> opcode = memory[vm -> program_counter] << 8 | memory[vm -> program_counter + 1];
+	vm -> program_counter +=2;
 
-    vm -> opcode = memory[vm -> program_counter] << 8 | memory[vm -> program_counter + 1];
-    vm -> program_counter += 2;
+	byte X       = (vm -> opcode & 0x0F00) >> 8;
+	byte Y       = (vm -> opcode & 0x00F0) >> 4;
+	halfword NNN = (vm -> opcode & 0x0FFF);
+	byte NN      = (vm -> opcode & 0x00FF);
+	byte N       = (vm -> opcode & 0x000F);
+    word key_pressed;
 
-    // Execute instructions
-    halfword bit0 = 0x000F;
-    halfword bit1 = 0x00F0;
-    halfword bit2 = 0x0F00;
-    halfword bit3 = 0xF000;
-    halfword NNN  = 0x0FFF;
-    halfword NN   = 0x00FF;
-    halfword N    = 0x000F;
-
-    halfword XY   = 0x0FF0;
-    byte X = (vm -> opcode & bit2) >> 8;
-    byte Y = (vm -> opcode & bit1) >> 4;
-
-    switch (vm -> opcode & bit3) {
+    printf("============\n");
+	printf("OPCODE: %x \n", vm -> opcode);
+	printf("PC: %x \n", vm -> program_counter);
+	printf("I Reg: %x \n", vm -> I_register);
+	
+	switch (vm -> opcode & 0xF000) {
         case 0x0000:
-            switch (vm -> opcode & bit0) {
-                // 00E0: Clears the screen | C Pseudo: disp_clear()
-                case 0x0000:
-                    memset(graphics, 0, RESOLUTION);
+            switch (vm -> opcode & 0x00FF) {
+                // 00E0: Clears the screen
+                case 0x00E0:
+                    memset(graphics, 0, 2048 * sizeof(word));
                     draw = true;
                     break;
 
-                // 00EE: Returns from a subroutine | C Pseudo: return;
-                case 0x000E:
+                // 00EE: Returns from a subroutine
+                case 0x00EE:
                     --vm -> stack_ptr;
-                    vm -> program_counter = stack[vm -> program_counter];
+                    vm -> program_counter = stack[vm -> stack_ptr];
                     break;
+            }
+            break;
 
-                default:
-                    SDL_Log("OPCODE Error: 0xxx -> %x", vm -> opcode);
-                    vm -> program_counter = vm -> opcode & NNN;
+        // 1NNN: Jumps to address NNN
+        case 0x1000:
+            vm -> program_counter = NNN;
+            break;
+        
+        // 2NNN: Calls subroutine at NNN
+        case 0x2000:
+            stack[vm -> stack_ptr] = vm -> program_counter;
+            ++vm -> stack_ptr;
+            vm -> program_counter = NNN;
+            break;
+        
+        // 3XNN: Skips the next instruction if VX equals NN
+        case 0x3000: 
+            if (vm -> V_register[X] == NN) {
+                vm -> program_counter += 2;
             }
             break;
         
-        // 1NNN: Jumps to address NNN | C Pseudo: goto NNN;
-        case 0x1000:
-            vm -> program_counter = vm -> opcode & NNN;
-            break;
-
-        // 2NNN: Calls subroutine at NNN | C Pseudo: *(0xNNN)()
-        case 0x2000:
-            stack[vm -> stack_ptr] = vm -> program_counter;     // Save return addr in stack
-            vm -> stack_ptr++;
-            vm -> program_counter = vm -> opcode & NNN;
-            break;
-
-        // 3XNN: Skips the next instruction if VX == NN | C Pseudo: if (VX == NN)
-        case 0x3000:
-            if (vm -> V_register[X] == (vm -> opcode & NN)) {
-                vm -> program_counter += 2;
-            }
-            break;
-
-        // 4XNN: Skips the next instruction if VX != NN | C Pseudo: if (VX != NN)
+        // 4XNN: Skips the next instruction if VX does not equal NN
         case 0x4000:
-            if (vm -> V_register[X] != (vm -> opcode & NN)) {
+            if (vm -> V_register[X] != NN) {
                 vm -> program_counter += 2;
             }
             break;
 
-        // 5XY0: Skips the next instruction if VX equals VY | C Pseudo: if (VX == VY)
+        // 5XY0: Skips the next instruction if VX equals VY
         case 0x5000:
             if (vm -> V_register[X] == vm -> V_register[Y]) {
                 vm -> program_counter += 2;
             }
             break;
-
-        // 6XNN: Sets VX to NN | C Pseudo: VX == NN
-        case 0x6000:
-            vm -> V_register[X] = vm -> opcode & NN;
-            break;
-
-        // 7XNN: Adds NN to VX | C Pseudo: VX += NN
-        case 0x7000:
-            vm -> V_register[X] += vm -> opcode & NN;
-            break;
-
         
+        // 6XNN: Sets VX to NN
+        case 0x6000:
+            vm -> V_register[X] = NN;
+            break;
+        
+        // 7XNN: Adds NN to VX
+        case 0x7000:
+            vm -> V_register[(X)] += NN;
+            break;
+
+        // 8XYN
+        case 0x8000:
+            switch(N){
+                // 8XY0: Sets VX to the value of VY
+                case 0x0000:
+                    vm -> V_register[X] = vm -> V_register[Y];
+                    break;
+
+                // 8XY1: Sets VX to VX or VY
+                case 0x0001:
+                    vm -> V_register[X] |= vm -> V_register[Y];
+                    break;
+
+                // 8XY2: Sets VX to VX and VY
+                case 0x0002:
+                    vm -> V_register[X] &= vm -> V_register[Y];
+                    break;
+
+                // 8XY3: Sets VX to VX xor VY
+                case 0x0003:
+                    vm -> V_register[X] ^= vm -> V_register[Y];
+                    break;
+
+                // 8XY4: Adds VY to VX
+                // VF is set to 1 when there's an overflow, and to 0 when there is not
+                case 0x0004:
+                    int i = (int)(vm -> V_register[X]) + (int)(vm -> V_register[Y]);
+                    if (i > 255) {
+                        vm -> V_register[0xF] = 1;
+                    } else {
+                        vm -> V_register[0xF] = 0;
+                    }
+                    vm -> V_register[X] = i & 0xFF;
+                    break;
+
+                // 8XY5: VY is subtracted from VX
+                // VF is set to 0 when there's an underflow, and 1 when there is not
+                case 0x0005:
+                    if (vm -> V_register[X] > vm -> V_register[Y]) {
+                        vm -> V_register[0xF] = 1;
+                    } else {
+                        vm -> V_register[0xF] = 0;
+                    }
+                    vm -> V_register[X] -= vm -> V_register[Y];
+                    break;
+
+                // 8XY6: Stores the least significant bit of VX in VF and then shifts VX to the right by 1
+                case 0x0006:
+                    vm -> V_register[0xF] = vm -> V_register[X] & 1;
+                    vm -> V_register[X] >>= 1;
+                    break;
+
+                // 8XY7: Sets VX to VY minus VX. VF is set to 0 when there's an underflow, and 1 when there is not
+                case 0x0007:
+                    if(vm -> V_register[Y] > vm -> V_register[X]) {
+                        vm -> V_register[0xF] = 1;
+                    } else {
+                        vm -> V_register[0xF] = 0;
+                    }
+                    vm -> V_register[X] = vm -> V_register[Y] - vm -> V_register[X];
+                    break;
+
+                // 8XYE: Stores the most significant bit of VX in VF and then shifts VX to the left by 1
+                case 0x000E:
+                    vm -> V_register[0xF] = vm -> V_register[X] >> 7;
+                    vm -> V_register[X] <<= 1;
+                    break;
+            }
+            break;
     }
 }

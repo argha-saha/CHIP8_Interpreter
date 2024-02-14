@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    cpu_cycle(&sdl, &vm);
+    cpu_cycle(&vm);
 
     update_display(&sdl, &vm, argv[1]);
 

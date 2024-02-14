@@ -12,7 +12,7 @@ bool quit = false;
 SDL_Event event;
 
 void update_display(sdl_t *sdl, chip8_vm *vm, char *rom_file) {
-    int delay = 16;
+    int delay = 4;
 
     while (quit == false) {
         while (SDL_PollEvent(&event)) {
@@ -31,7 +31,7 @@ void update_display(sdl_t *sdl, chip8_vm *vm, char *rom_file) {
                         case SDLK_F1:
                             initialize_machine(vm);
                             load_chip8_rom(sdl, rom_file);
-                            cpu_cycle(sdl, vm);
+                            cpu_cycle(vm);
                             update_display(sdl, vm, rom_file);
                             deactivate_sdl(sdl);
                             break;
@@ -201,7 +201,7 @@ void update_display(sdl_t *sdl, chip8_vm *vm, char *rom_file) {
         }
 
         if (paused == false) {
-            cpu_cycle(sdl, vm);
+            cpu_cycle(vm);
         }
 
         if (draw == true) {
@@ -219,7 +219,7 @@ void draw_graphics(sdl_t *sdl) {
 
     SDL_SetRenderDrawColor(sdl -> renderer, 0, 0, 0, 255);
     SDL_RenderClear(sdl -> renderer);
-    SDL_SetRenderDrawColor(sdl -> renderer, 0, 255, 0, 0);
+    SDL_SetRenderDrawColor(sdl -> renderer, 255, 255, 255, 0);
 
     for (int x = 0; x < WIDTH; ++x) {
         for (int y = 0; y < HEIGHT; ++y) {
