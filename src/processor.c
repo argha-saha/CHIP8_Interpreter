@@ -122,15 +122,18 @@ void cpu_cycle(chip8_vm *vm) {
 	printf("I Reg: %x \n", vm -> I_register);
 	
 	switch (vm -> opcode & 0xF000) {
+        // 00xx
         case 0x0000:
             switch (vm -> opcode & 0x00FF) {
                 // 00E0: Clears the screen
+                // C Pseudo: disp_clear()
                 case 0x00E0:
                     memset(graphics, 0, 2048 * sizeof(word));
                     draw = true;
                     break;
 
                 // 00EE: Returns from a subroutine
+                // C Pseudo: return;
                 case 0x00EE:
                     --vm -> stack_ptr;
                     vm -> program_counter = stack[vm -> stack_ptr];
@@ -139,11 +142,13 @@ void cpu_cycle(chip8_vm *vm) {
             break;
 
         // 1NNN: Jumps to address NNN
+        // C Pseudo: goto NNN;
         case 0x1000:
             vm -> program_counter = NNN;
             break;
         
         // 2NNN: Calls subroutine at NNN
+        // C Pseudo: *(0xNNN)()
         case 0x2000:
             stack[vm -> stack_ptr] = vm -> program_counter;
             ++vm -> stack_ptr;
@@ -151,6 +156,7 @@ void cpu_cycle(chip8_vm *vm) {
             break;
         
         // 3XNN: Skips the next instruction if VX equals NN
+        // C Pseudo: if (VX == NN)
         case 0x3000: 
             if (vm -> V_register[X] == NN) {
                 vm -> program_counter += 2;
@@ -158,6 +164,7 @@ void cpu_cycle(chip8_vm *vm) {
             break;
         
         // 4XNN: Skips the next instruction if VX does not equal NN
+        // C Pseudo: if (VX != NN)
         case 0x4000:
             if (vm -> V_register[X] != NN) {
                 vm -> program_counter += 2;
@@ -165,6 +172,7 @@ void cpu_cycle(chip8_vm *vm) {
             break;
 
         // 5XY0: Skips the next instruction if VX equals VY
+        // C Pseudo: if (VX == VY)
         case 0x5000:
             if (vm -> V_register[X] == vm -> V_register[Y]) {
                 vm -> program_counter += 2;
@@ -172,11 +180,13 @@ void cpu_cycle(chip8_vm *vm) {
             break;
         
         // 6XNN: Sets VX to NN
+        // C Pseudo: VX = NN
         case 0x6000:
             vm -> V_register[X] = NN;
             break;
         
         // 7XNN: Adds NN to VX
+        // C Pseudo: VX += NN
         case 0x7000:
             vm -> V_register[(X)] += NN;
             break;
@@ -185,65 +195,81 @@ void cpu_cycle(chip8_vm *vm) {
         case 0x8000:
             switch(N){
                 // 8XY0: Sets VX to the value of VY
+                // C Pseudo: VX = VY
                 case 0x0000:
                     vm -> V_register[X] = vm -> V_register[Y];
                     break;
 
                 // 8XY1: Sets VX to VX or VY
+                // C Pseudo: VX |= VY
                 case 0x0001:
                     vm -> V_register[X] |= vm -> V_register[Y];
                     break;
 
                 // 8XY2: Sets VX to VX and VY
+                // C Pseudo: VX &= VY
                 case 0x0002:
                     vm -> V_register[X] &= vm -> V_register[Y];
                     break;
 
                 // 8XY3: Sets VX to VX xor VY
+                // C Pseudo: VX ^= VY
                 case 0x0003:
                     vm -> V_register[X] ^= vm -> V_register[Y];
                     break;
 
                 // 8XY4: Adds VY to VX
                 // VF is set to 1 when there's an overflow, and to 0 when there is not
+                // C Pseudo: VX += VY
                 case 0x0004:
                     int result = (int)(vm -> V_register[X]) + (int)(vm -> V_register[Y]);
+
                     if (result > 255) {
                         vm -> V_register[0xF] = 1;
                     } else {
                         vm -> V_register[0xF] = 0;
                     }
+
                     vm -> V_register[X] = result & 0xFF;
+
                     break;
 
                 // 8XY5: VY is subtracted from VX
                 // VF is set to 0 when there's an underflow, and 1 when there is not
+                // C Pseudo: VX -= VY
                 case 0x0005:
                     if ((vm -> V_register[X]) > (vm -> V_register[Y])) {
                         vm -> V_register[0xF] = 1;
                     } else {
                         vm -> V_register[0xF] = 0;
                     }
+
                     vm -> V_register[X] -= vm -> V_register[Y];
+
                     break;
 
                 // 8XY6: Stores the least significant bit of VX in VF and then shifts VX to the right by 1
+                // C Pseudo: VX >>= 1
                 case 0x0006:
                     vm -> V_register[0xF] = vm -> V_register[X] & 1;
                     vm -> V_register[X] >>= 1;
                     break;
 
                 // 8XY7: Sets VX to VY minus VX. VF is set to 0 when there's an underflow, and 1 when there is not
+                // C Pseudo: VX = VY - VX
                 case 0x0007:
                     if(vm -> V_register[Y] > vm -> V_register[X]) {
                         vm -> V_register[0xF] = 1;
                     } else {
                         vm -> V_register[0xF] = 0;
                     }
+
                     vm -> V_register[X] = (vm -> V_register[Y]) - (vm -> V_register[X]);
+
                     break;
 
                 // 8XYE: Stores the most significant bit of VX in VF and then shifts VX to the left by 1
+                // C Pseudo: VX <<= 1
                 case 0x000E:
                     vm -> V_register[0xF] = vm -> V_register[X] >> 7;
                     vm -> V_register[X] <<= 1;
@@ -252,27 +278,63 @@ void cpu_cycle(chip8_vm *vm) {
             break;
         
         // 9XY0: Skips the next instruction if VX does not equal VY
+        // C Pseudo: if (VX != VY)
         case 0x9000:
             if ((vm -> V_register[X]) != (vm -> V_register[Y])) {
                 vm -> program_counter += 2;
             }
+
             break;
 
         // ANNN: Sets I to the address NNN
+        // C Pseudo: I = NNN
         case 0xA000:
             vm -> I_register = NNN;
             break;
 
         // BNNN: Jumps to the address NNN plus V0
+        // C Pseudo: PC = V0 + NNN
         case 0xB000:
-            vm -> program_counter = NNN + (vm -> V_register[0x0]);
+            vm -> program_counter = (vm -> V_register[0x0]) + NNN;
             break;
 
         // CXNN: Sets VX to the result of a bitwise and operation on a random number (Typically: 0 to 255) and NN
+        // C Pseudo: VX = rand() & NN
         case 0xC000:
             vm -> V_register[X] = (rand() % 0x100) & NN;
             break;
 
+        // DXYN: Draws a sprite at coordinate (VX, VY) that has a width of 8 pixels and a height of N pixels
+        // Each row of 8 pixels is read as bit-coded starting from memory location I
+        // I value does not change after the execution of this instruction
+        // As described above, VF is set to 1 if any screen pixels are flipped from set to unset when the sprite is drawn, 
+        // and to 0 if that does not happen
+        // C Pseudo: draw(VX, VY, N)
+        case 0xD000:;
+            halfword x = vm -> V_register[X];
+            halfword y = vm -> V_register[Y];
+            halfword height = N;
+            byte pixel;
+
+            vm -> V_register[0xF] = 0;
+
+            for (int y_line = 0; y_line < height; ++y_line) {
+                pixel = memory[vm -> I_register + y_line];
+                
+                for(int x_line = 0; x_line < 8; ++x_line) {
+                    if((pixel & (0x80 >> x_line)) != 0) {
+                        if(graphics[(x + x_line + ((y + y_line) * WIDTH))] == 1){
+                            vm -> V_register[0xF] = 1;                                   
+                        }
+
+                        graphics[x + x_line + ((y + y_line) * WIDTH)] ^= 1;
+                    }
+                }
+            }
+
+            draw = true;
+            break;
+        
         
     }
 }
