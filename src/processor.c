@@ -115,6 +115,7 @@ void cpu_cycle(chip8_vm *vm) {
 	halfword NNN = (vm -> opcode & 0x0FFF);
 	byte NN      = (vm -> opcode & 0x00FF);
 	byte N       = (vm -> opcode & 0x000F);
+    bool key_pressed;
 
     printf("============\n");
 	printf("OPCODE: %x \n", vm -> opcode);
@@ -356,6 +357,35 @@ void cpu_cycle(chip8_vm *vm) {
             }
             break;
 
-        
+        // FXxx
+        case 0xF000:
+            switch (NN) {
+                // FX07: Sets VX to the value of the delay timer
+                // C Pseudo: VX = get_delay()
+                case 0x0007:
+                    vm -> V_register[X] = vm -> delay_timer;
+                    break;
+
+                // FX0A: A key press is awaited, and then stored in VX
+                // C Pseudo: VX = get_key()
+                case 0x000A:
+                    key_pressed = false;
+
+                    for (word i = 0; i < 16; ++i) {
+                        if (scankey[i]) {
+                            key_pressed = true;
+                            vm -> V_register[X] = i;
+                        }
+                    }
+
+                    if (key_pressed == false) {
+                        vm -> program_counter -= 2;
+                    }
+                    
+                    break;
+
+                
+            }
+            break;
     }
 }
