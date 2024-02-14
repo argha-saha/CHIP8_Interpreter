@@ -28,6 +28,14 @@ void update_display(sdl_t *sdl, chip8_vm *vm, char *rom_file) {
                             quit = true;
                             break;
 
+                        case SDLK_F1:
+                            initialize_machine(vm);
+                            load_chip8_rom(sdl, rom_file);
+                            cpu_cycle(sdl, vm);
+                            update_display(sdl, vm, rom_file);
+                            deactivate_sdl(sdl);
+                            break;
+
                         case SDLK_F2:
                             delay--;
                             break;

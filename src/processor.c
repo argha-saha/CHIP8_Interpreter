@@ -107,10 +107,87 @@ bool load_chip8_rom(sdl_t *sdl, char *rom_file) {
 
 void cpu_cycle(sdl_t *sdl, chip8_vm *vm) {
     (void) *sdl;
-    (void) *vm;
 
-    
+    vm -> opcode = memory[vm -> program_counter] << 8 | memory[vm -> program_counter + 1];
+    vm -> program_counter += 2;
 
     // Execute instructions
-    
+    halfword bit0 = 0x000F;
+    halfword bit1 = 0x00F0;
+    halfword bit2 = 0x0F00;
+    halfword bit3 = 0xF000;
+    halfword NNN  = 0x0FFF;
+    halfword NN   = 0x00FF;
+    halfword N    = 0x000F;
+
+    halfword XY   = 0x0FF0;
+    byte X = (vm -> opcode & bit2) >> 8;
+    byte Y = (vm -> opcode & bit1) >> 4;
+
+    switch (vm -> opcode & bit3) {
+        case 0x0000:
+            switch (vm -> opcode & bit0) {
+                // 00E0: Clears the screen | C Pseudo: disp_clear()
+                case 0x0000:
+                    memset(graphics, 0, RESOLUTION);
+                    draw = true;
+                    break;
+
+                // 00EE: Returns from a subroutine | C Pseudo: return;
+                case 0x000E:
+                    --vm -> stack_ptr;
+                    vm -> program_counter = stack[vm -> program_counter];
+                    break;
+
+                default:
+                    SDL_Log("OPCODE Error: 0xxx -> %x", vm -> opcode);
+                    vm -> program_counter = vm -> opcode & NNN;
+            }
+            break;
+        
+        // 1NNN: Jumps to address NNN | C Pseudo: goto NNN;
+        case 0x1000:
+            vm -> program_counter = vm -> opcode & NNN;
+            break;
+
+        // 2NNN: Calls subroutine at NNN | C Pseudo: *(0xNNN)()
+        case 0x2000:
+            stack[vm -> stack_ptr] = vm -> program_counter;     // Save return addr in stack
+            vm -> stack_ptr++;
+            vm -> program_counter = vm -> opcode & NNN;
+            break;
+
+        // 3XNN: Skips the next instruction if VX == NN | C Pseudo: if (VX == NN)
+        case 0x3000:
+            if (vm -> V_register[X] == (vm -> opcode & NN)) {
+                vm -> program_counter += 2;
+            }
+            break;
+
+        // 4XNN: Skips the next instruction if VX != NN | C Pseudo: if (VX != NN)
+        case 0x4000:
+            if (vm -> V_register[X] != (vm -> opcode & NN)) {
+                vm -> program_counter += 2;
+            }
+            break;
+
+        // 5XY0: Skips the next instruction if VX equals VY | C Pseudo: if (VX == VY)
+        case 0x5000:
+            if (vm -> V_register[X] == vm -> V_register[Y]) {
+                vm -> program_counter += 2;
+            }
+            break;
+
+        // 6XNN: Sets VX to NN | C Pseudo: VX == NN
+        case 0x6000:
+            vm -> V_register[X] = vm -> opcode & NN;
+            break;
+
+        // 7XNN: Adds NN to VX | C Pseudo: VX += NN
+        case 0x7000:
+            vm -> V_register[X] += vm -> opcode & NN;
+            break;
+
+        
+    }
 }
