@@ -115,7 +115,6 @@ void cpu_cycle(chip8_vm *vm) {
 	halfword NNN = (vm -> opcode & 0x0FFF);
 	byte NN      = (vm -> opcode & 0x00FF);
 	byte N       = (vm -> opcode & 0x000F);
-    word key_pressed;
 
     printf("============\n");
 	printf("OPCODE: %x \n", vm -> opcode);
@@ -208,19 +207,19 @@ void cpu_cycle(chip8_vm *vm) {
                 // 8XY4: Adds VY to VX
                 // VF is set to 1 when there's an overflow, and to 0 when there is not
                 case 0x0004:
-                    int i = (int)(vm -> V_register[X]) + (int)(vm -> V_register[Y]);
-                    if (i > 255) {
+                    int result = (int)(vm -> V_register[X]) + (int)(vm -> V_register[Y]);
+                    if (result > 255) {
                         vm -> V_register[0xF] = 1;
                     } else {
                         vm -> V_register[0xF] = 0;
                     }
-                    vm -> V_register[X] = i & 0xFF;
+                    vm -> V_register[X] = result & 0xFF;
                     break;
 
                 // 8XY5: VY is subtracted from VX
                 // VF is set to 0 when there's an underflow, and 1 when there is not
                 case 0x0005:
-                    if (vm -> V_register[X] > vm -> V_register[Y]) {
+                    if ((vm -> V_register[X]) > (vm -> V_register[Y])) {
                         vm -> V_register[0xF] = 1;
                     } else {
                         vm -> V_register[0xF] = 0;
@@ -241,7 +240,7 @@ void cpu_cycle(chip8_vm *vm) {
                     } else {
                         vm -> V_register[0xF] = 0;
                     }
-                    vm -> V_register[X] = vm -> V_register[Y] - vm -> V_register[X];
+                    vm -> V_register[X] = (vm -> V_register[Y]) - (vm -> V_register[X]);
                     break;
 
                 // 8XYE: Stores the most significant bit of VX in VF and then shifts VX to the left by 1
@@ -251,5 +250,29 @@ void cpu_cycle(chip8_vm *vm) {
                     break;
             }
             break;
+        
+        // 9XY0: Skips the next instruction if VX does not equal VY
+        case 0x9000:
+            if ((vm -> V_register[X]) != (vm -> V_register[Y])) {
+                vm -> program_counter += 2;
+            }
+            break;
+
+        // ANNN: Sets I to the address NNN
+        case 0xA000:
+            vm -> I_register = NNN;
+            break;
+
+        // BNNN: Jumps to the address NNN plus V0
+        case 0xB000:
+            vm -> program_counter = NNN + (vm -> V_register[0x0]);
+            break;
+
+        // CXNN: Sets VX to the result of a bitwise and operation on a random number (Typically: 0 to 255) and NN
+        case 0xC000:
+            vm -> V_register[X] = (rand() % 0x100) & NN;
+            break;
+
+        
     }
 }
