@@ -335,6 +335,27 @@ void cpu_cycle(chip8_vm *vm) {
             draw = true;
             break;
         
+        // EXxx
+        case 0xE000:
+            switch(NN){
+                // EX9E: Skips the next instruction if the key stored in VX is pressed
+                // C Pseudo: if (key() == VX)
+                case 0x009E:
+                    if(scankey[vm -> V_register[X]] != 0) {
+                        vm -> program_counter += 2;
+                    }
+                    break;	
+
+                // EXA1: Skips the next instruction if the key stored in VX is not pressed
+                // C Pseudo: if (key() != VX)
+                case 0x00A1:
+                    if(scankey[vm -> V_register[X]] == 0) {
+                        vm -> program_counter += 2;
+                    }
+                    break;
+            }
+            break;
+
         
     }
 }
