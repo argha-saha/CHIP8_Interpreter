@@ -409,7 +409,28 @@ void cpu_cycle(chip8_vm *vm) {
                     vm -> I_register = (vm -> V_register[X]) * 5;
                     break;
 
+                // FX33: Stores the binary-coded decimal representation of VX, with the hundreds digit in memory at location in I, 
+                // the tens digit at location I+1, and the ones digit at location I+2
+                // C Pseudo: set_BCD(VX) *(I+0) = BCD(3); *(I+1) = BCD(2); *(I+2) = BCD(1);
                 
+
+                // FX55: Stores from V0 to VX (including VX) in memory, starting at address I
+                // The offset from I is increased by 1 for each value written, but I itself is left unmodified
+                // C Pseudo: reg_dump(VX, &I)
+                case 0x0055:
+                    for (byte i = 0; i <= X; ++i) {
+                        memory[(vm -> I_register) + i] = vm -> V_register[i];	
+                    }
+                    break;
+
+                // FX65: Fills from V0 to VX (including VX) with values from memory, starting at address I
+                // The offset from I is increased by 1 for each value read, but I itself is left unmodified
+                // C Pseudo: reg_load(VX, &I)
+                case 0x0065:
+                    for (byte i = 0; i <= X; ++i) {
+                        vm -> V_register[i] = memory[(vm -> I_register) + i];	
+                    }
+                    break;
             }
             break;
     }
