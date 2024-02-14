@@ -62,7 +62,7 @@ bool initialize_machine(chip8_vm *vm) {
 
 bool load_chip8_rom(sdl_t *sdl, char *rom_file) {
     SDL_RenderClear(sdl -> renderer);
-    sdl -> texture = SDL_CreateTexture(sdl -> renderer, SDL_PIXELFORMAT_RGB888, SDL_TEXTUREACCESS_STREAMING, WIDTH, HEIGHT);
+    sdl -> texture = SDL_CreateTexture(sdl -> renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, WIDTH, HEIGHT);
 
     FILE *rom = fopen(rom_file, "rb");
     if (rom == NULL) {
@@ -103,4 +103,14 @@ bool load_chip8_rom(sdl_t *sdl, char *rom_file) {
     free(buffer);
 
     return true;
+}
+
+void cpu_cycle(sdl_t *sdl, chip8_vm *vm) {
+    (void) *sdl;
+    (void) *vm;
+
+    
+
+    // Execute instructions
+    
 }

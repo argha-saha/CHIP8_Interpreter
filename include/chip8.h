@@ -32,10 +32,6 @@ typedef struct {
     byte delay_timer;
     byte sound_timer;
 
-    // Input
-
-    // Graphics and sound
-
     // Opcode table
     halfword program_counter;
     halfword opcode;
@@ -53,5 +49,6 @@ void deactivate_sdl(sdl_t *sdl);
 
 bool initialize_machine(chip8_vm *vm);
 bool load_chip8_rom(sdl_t *sdl, char *rom_file);
+void cpu_cycle(sdl_t *sdl, chip8_vm *vm);
 
 #endif

@@ -27,6 +27,10 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
+    cpu_cycle(&sdl, &vm);
+
+    update_display(&sdl, &vm, argv[1]);
+
     deactivate_sdl(&sdl);
 
     exit(EXIT_SUCCESS);
