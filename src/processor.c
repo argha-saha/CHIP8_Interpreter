@@ -384,6 +384,31 @@ void cpu_cycle(chip8_vm *vm) {
                     
                     break;
 
+                // FX15: Sets the delay timer to VX
+                // C Pseudo: delay_timer(VX)
+                case 0x0015:
+                    vm -> delay_timer = vm -> V_register[X];
+                    break;
+
+                // FX18: Sets the sound timer to VX
+                // C Pseudo: sound_timer(VX)
+                case 0x0018:
+                    vm -> sound_timer = vm -> V_register[X];
+                    break;
+
+                // FX1E: Adds VX to I. VF is not affected
+                // C Pseudo: I += VX
+                case 0x001E:
+                    vm -> I_register = (vm -> I_register) + (vm -> V_register[X]);
+                    break;
+
+                // FX29: Sets I to the location of the sprite for the character in VX
+                // Characters 0-F (in hexadecimal) are represented by a 4x5 font
+                // C Pseudo: I = sprite_adder[VX]
+                case 0x0029:
+                    vm -> I_register = (vm -> V_register[X]) * 5;
+                    break;
+
                 
             }
             break;
