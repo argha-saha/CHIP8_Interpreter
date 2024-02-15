@@ -22,6 +22,9 @@ typedef struct {
 } sdl_t;
 
 typedef struct {
+    // Memory
+    byte memory[RAM_SIZE];
+
     // Registers
     byte V_register[0x10];              // V[0] to V[F]
     halfword I_register;
@@ -38,7 +41,7 @@ typedef struct {
     halfword opcode;
 } chip8_vm;
 
-extern byte memory[RAM_SIZE];           // 4 KB
+
 extern halfword stack[STACK_SIZE];
 extern word graphics[RESOLUTION];
 extern byte scankey[16];
@@ -49,7 +52,7 @@ bool initialize_sdl(sdl_t *sdl);
 void deactivate_sdl(sdl_t *sdl);
 
 bool initialize_machine(chip8_vm *vm);
-bool load_chip8_rom(sdl_t *sdl, char *rom_file);
+bool load_chip8_rom(sdl_t *sdl, chip8_vm *vm, char *rom_file);
 void cpu_cycle(chip8_vm *vm);
 
 #endif

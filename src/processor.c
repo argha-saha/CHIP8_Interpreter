@@ -7,7 +7,7 @@
 
 #include "../include/chip8.h"
 
-byte memory[RAM_SIZE];
+//byte memory[RAM_SIZE];
 halfword stack[STACK_SIZE];
 word graphics[RESOLUTION];
 byte scankey[16];
@@ -19,7 +19,7 @@ bool initialize_machine(chip8_vm *vm) {
     draw = true;
 
     // Reset memory
-    memset(memory, 0, MAX_MEMORY * sizeof(byte));
+    //memset(memory, 0, MAX_MEMORY * sizeof(byte));
     memset(stack, 0, STACK_SIZE * sizeof(halfword));
     memset(graphics, 0, RESOLUTION * sizeof(word));
     memset(scankey, 0, 16);
@@ -55,13 +55,13 @@ bool initialize_machine(chip8_vm *vm) {
 
     // Font starts at 0x50
     for (int i = 0; i < 80; ++i) {
-        memory[0x50 + i] = font_set[i];
+        vm -> memory[0x50 + i] = font_set[i];
     }
 
     return true;
 }
 
-bool load_chip8_rom(sdl_t *sdl, char *rom_file) {
+bool load_chip8_rom(sdl_t *sdl, chip8_vm *vm, char *rom_file) {
     SDL_RenderClear(sdl -> renderer);
     sdl -> texture = SDL_CreateTexture(sdl -> renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, WIDTH, HEIGHT);
 
@@ -93,7 +93,7 @@ bool load_chip8_rom(sdl_t *sdl, char *rom_file) {
     // Copy buffer to memory
     if (rom_size < (0xfff - 0x200)) {
         for (int i = 0; i < rom_size; ++i) {
-            memory[i + 0x200] = buffer[i];
+            vm -> memory[i + 0x200] = buffer[i];
         }
     } else {
         SDL_Log("ROM file %s is too large", rom_file);
@@ -107,7 +107,7 @@ bool load_chip8_rom(sdl_t *sdl, char *rom_file) {
 }
 
 void cpu_cycle(chip8_vm *vm) {
-	vm -> opcode = memory[vm -> program_counter] << 8 | memory[vm -> program_counter + 1];
+	vm -> opcode = vm -> memory[vm -> program_counter] << 8 | vm -> memory[vm -> program_counter + 1];
 	vm -> program_counter +=2;
 
 	byte X       = (vm -> opcode & 0x0F00) >> 8;
@@ -320,7 +320,7 @@ void cpu_cycle(chip8_vm *vm) {
             vm -> V_register[0xF] = 0;
 
             for (int y_line = 0; y_line < height; ++y_line) {
-                pixel = memory[vm -> I_register + y_line];
+                pixel = vm -> memory[vm -> I_register + y_line];
                 
                 for(int x_line = 0; x_line < 8; ++x_line) {
                     if((pixel & (0x80 >> x_line)) != 0) {
@@ -415,11 +415,11 @@ void cpu_cycle(chip8_vm *vm) {
                 case 0x0033:
                     int VX;
                     VX = vm -> V_register[X];
-                    memory[vm -> I_register] = (VX - (VX % 100)) / 100;
-                    VX -= memory[vm -> I_register] * 100;
-                    memory[vm -> I_register + 1] = (VX - (VX % 10)) / 10;
-                    VX -= memory[vm -> I_register + 1] * 10;
-                    memory[vm -> I_register + 2] = VX;
+                    vm -> memory[vm -> I_register] = (VX - (VX % 100)) / 100;
+                    VX -= vm -> memory[vm -> I_register] * 100;
+                    vm -> memory[vm -> I_register + 1] = (VX - (VX % 10)) / 10;
+                    VX -= vm -> memory[vm -> I_register + 1] * 10;
+                    vm -> memory[vm -> I_register + 2] = VX;
                     break;
 
                 // FX55: Stores from V0 to VX (including VX) in memory, starting at address I
@@ -427,7 +427,7 @@ void cpu_cycle(chip8_vm *vm) {
                 // C Pseudo: reg_dump(VX, &I)
                 case 0x0055:
                     for (byte i = 0; i <= X; ++i) {
-                        memory[(vm -> I_register) + i] = vm -> V_register[i];	
+                        vm -> memory[(vm -> I_register) + i] = vm -> V_register[i];	
                     }
                     break;
 
@@ -436,7 +436,7 @@ void cpu_cycle(chip8_vm *vm) {
                 // C Pseudo: reg_load(VX, &I)
                 case 0x0065:
                     for (byte i = 0; i <= X; ++i) {
-                        vm -> V_register[i] = memory[(vm -> I_register) + i];	
+                        vm -> V_register[i] = vm -> memory[(vm -> I_register) + i];	
                     }
                     break;
             }

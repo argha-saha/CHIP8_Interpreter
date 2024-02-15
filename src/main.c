@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    if (load_chip8_rom(&sdl, argv[1]) == false) {
+    if (load_chip8_rom(&sdl, &vm, argv[1]) == false) {
         exit(EXIT_FAILURE);
     }
 

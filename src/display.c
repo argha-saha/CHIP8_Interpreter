@@ -30,7 +30,7 @@ void update_display(sdl_t *sdl, chip8_vm *vm, char *rom_file) {
 
                         case SDLK_F1:
                             initialize_machine(vm);
-                            load_chip8_rom(sdl, rom_file);
+                            load_chip8_rom(sdl, vm, rom_file);
                             cpu_cycle(vm);
                             update_display(sdl, vm, rom_file);
                             deactivate_sdl(sdl);
