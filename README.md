@@ -11,8 +11,6 @@ RPM (e.g. Fedora, CentOS):<br />
 sudo dnf install SDL2-devel<br />
 
 **MACOS**
-SDL2 Installation<br />
-
 brew install sdl2<br />
 > Unable to run on macOS Sonoma (14.3)<br />
 
