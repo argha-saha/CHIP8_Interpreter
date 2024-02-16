@@ -23,28 +23,30 @@ typedef struct {
 
 typedef struct {
     // Memory
-    byte memory[RAM_SIZE];
+    byte memory[RAM_SIZE];       // 4 KB RAM
 
     // Registers
-    byte V_register[0x10];              // V[0] to V[F]
-    halfword I_register;
+    byte V_register[0x10];       // V[0] to V[F]
+    halfword I_register;         // 12-bit index register
 
     // The stack
-    halfword stack_ptr;
+    halfword stack[STACK_SIZE];  // Stores 16-bit addresses
+    halfword stack_ptr;          // Stores top of stack
 
-    // Timers
-    byte delay_timer;
-    byte sound_timer;
+    // Timers (count down at 60hz until they reach 0)
+    byte delay_timer;            // Used for timing events
+    byte sound_timer;            // Beeping sound is made if value is nonzero
+
+    // Input
+    byte scankey[16];            // 16 keys ranging 0 to F
+
+    // Graphics and sound
+    word graphics[RESOLUTION];   // 64x32 original resolution
 
     // Opcode table
-    halfword program_counter;
-    halfword opcode;
+    halfword program_counter;    // Points at current instruction in memory
+    halfword opcode;             // Each opcode is 2 bytes long and stored big-endian
 } chip8_vm;
-
-
-extern halfword stack[STACK_SIZE];
-extern word graphics[RESOLUTION];
-extern byte scankey[16];
 
 extern bool draw;
 

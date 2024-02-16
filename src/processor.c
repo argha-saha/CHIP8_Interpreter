@@ -7,11 +7,6 @@
 
 #include "../include/chip8.h"
 
-//byte memory[RAM_SIZE];
-halfword stack[STACK_SIZE];
-word graphics[RESOLUTION];
-byte scankey[16];
-
 bool draw;
 
 bool initialize_machine(chip8_vm *vm) {
@@ -19,10 +14,10 @@ bool initialize_machine(chip8_vm *vm) {
     draw = true;
 
     // Reset memory
-    //memset(memory, 0, MAX_MEMORY * sizeof(byte));
-    memset(stack, 0, STACK_SIZE * sizeof(halfword));
-    memset(graphics, 0, RESOLUTION * sizeof(word));
-    memset(scankey, 0, 16);
+    memset(vm -> memory, 0, MAX_MEMORY * sizeof(byte));
+    memset(vm -> stack, 0, STACK_SIZE * sizeof(halfword));
+    memset(vm -> graphics, 0, RESOLUTION * sizeof(word));
+    memset(vm -> scankey, 0, 16);
     memset(vm -> V_register, 0, 16);
 
     // Left to right, top to bottom
@@ -110,11 +105,11 @@ void cpu_cycle(chip8_vm *vm) {
 	vm -> opcode = vm -> memory[vm -> program_counter] << 8 | vm -> memory[vm -> program_counter + 1];
 	vm -> program_counter +=2;
 
-	byte X       = (vm -> opcode & 0x0F00) >> 8;
-	byte Y       = (vm -> opcode & 0x00F0) >> 4;
-	halfword NNN = (vm -> opcode & 0x0FFF);
-	byte NN      = (vm -> opcode & 0x00FF);
-	byte N       = (vm -> opcode & 0x000F);
+	byte X       = (vm -> opcode & 0x0F00) >> 8;    // 2nd bit of DXYN
+	byte Y       = (vm -> opcode & 0x00F0) >> 4;    // 1st bit of DXYN
+	halfword NNN = (vm -> opcode & 0x0FFF);         // address
+	byte NN      = (vm -> opcode & 0x00FF);         // 8-bit constant
+	byte N       = (vm -> opcode & 0x000F);         // 4-bit constant
     bool key_pressed;
 
     printf("============\n");
@@ -129,7 +124,7 @@ void cpu_cycle(chip8_vm *vm) {
                 // 00E0: Clears the screen
                 // C Pseudo: disp_clear()
                 case 0x00E0:
-                    memset(graphics, 0, 2048 * sizeof(word));
+                    memset(vm -> graphics, 0, 2048 * sizeof(word));
                     draw = true;
                     break;
 
@@ -137,7 +132,7 @@ void cpu_cycle(chip8_vm *vm) {
                 // C Pseudo: return;
                 case 0x00EE:
                     --vm -> stack_ptr;
-                    vm -> program_counter = stack[vm -> stack_ptr];
+                    vm -> program_counter = vm -> stack[vm -> stack_ptr];
                     break;
             }
             break;
@@ -151,7 +146,7 @@ void cpu_cycle(chip8_vm *vm) {
         // 2NNN: Calls subroutine at NNN
         // C Pseudo: *(0xNNN)()
         case 0x2000:
-            stack[vm -> stack_ptr] = vm -> program_counter;
+            vm -> stack[vm -> stack_ptr] = vm -> program_counter;
             ++vm -> stack_ptr;
             vm -> program_counter = NNN;
             break;
@@ -194,7 +189,7 @@ void cpu_cycle(chip8_vm *vm) {
 
         // 8XYN
         case 0x8000:
-            switch(N){
+            switch (N){
                 // 8XY0: Sets VX to the value of VY
                 // C Pseudo: VX = VY
                 case 0x0000:
@@ -324,11 +319,11 @@ void cpu_cycle(chip8_vm *vm) {
                 
                 for(int x_line = 0; x_line < 8; ++x_line) {
                     if((pixel & (0x80 >> x_line)) != 0) {
-                        if(graphics[(x + x_line + ((y + y_line) * WIDTH))] == 1){
+                        if(vm -> graphics[(x + x_line + ((y + y_line) * WIDTH))] == 1){
                             vm -> V_register[0xF] = 1;                                   
                         }
 
-                        graphics[x + x_line + ((y + y_line) * WIDTH)] ^= 1;
+                        vm -> graphics[x + x_line + ((y + y_line) * WIDTH)] ^= 1;
                     }
                 }
             }
@@ -338,19 +333,19 @@ void cpu_cycle(chip8_vm *vm) {
         
         // EXxx
         case 0xE000:
-            switch(NN){
+            switch (NN){
                 // EX9E: Skips the next instruction if the key stored in VX is pressed
                 // C Pseudo: if (key() == VX)
                 case 0x009E:
-                    if(scankey[vm -> V_register[X]] != 0) {
+                    if(vm -> scankey[vm -> V_register[X]] != 0) {
                         vm -> program_counter += 2;
                     }
-                    break;	
+                    break;
 
                 // EXA1: Skips the next instruction if the key stored in VX is not pressed
                 // C Pseudo: if (key() != VX)
                 case 0x00A1:
-                    if(scankey[vm -> V_register[X]] == 0) {
+                    if(vm -> scankey[vm -> V_register[X]] == 0) {
                         vm -> program_counter += 2;
                     }
                     break;
@@ -372,7 +367,7 @@ void cpu_cycle(chip8_vm *vm) {
                     key_pressed = false;
 
                     for (word i = 0; i < 16; ++i) {
-                        if (scankey[i]) {
+                        if (vm -> scankey[i]) {
                             key_pressed = true;
                             vm -> V_register[X] = i;
                         }
