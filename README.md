@@ -20,6 +20,8 @@ brew install sdl2<br />
 3. make<br />
 4. ./chip8 rom/<rom_file_name><br />
 
+> Downloaded CHIP-8 ROM files may be added to the 'rom' folder<br />
+
 ### Resources
 Guide to Making a CHIP-8 Emulator: https://tobiasvl.github.io/blog/write-a-chip-8-emulator/<br />
 CHIP-8 Wikipedia: https://en.wikipedia.org/wiki/CHIP-8#cite_note-bitshift-16<br />
